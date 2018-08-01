@@ -23,6 +23,7 @@
 
 namespace block_opencast\local;
 
+defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/lib/filelib.php');
 
 use block_opencast\opencast_state_exception;
@@ -67,6 +68,7 @@ class upload_helper {
      * Get all upload jobs, for which a file is present in the filearea of plugin.
      *
      * @param int $courseid
+     *
      * @return array
      */
     public static function get_upload_jobs($courseid) {
@@ -134,7 +136,11 @@ class upload_helper {
         // Delete all jobs with status ready to transfer, where file is missing.
         $sql = "SELECT uj.id
                 FROM {block_opencast_uploadjob} uj
-                LEFT JOIN {files} f ON uj.fileid = f.id AND f.component = :component AND f.filearea = :filearea AND f.filename <> '.'
+                LEFT JOIN {files} f
+                ON uj.fileid = f.id AND
+                  f.component = :component AND
+                  f.filearea = :filearea AND
+                  f.filename <> '.'
                 WHERE f.id IS NULL AND uj.status = :status";
 
         $params = [];
@@ -179,13 +185,13 @@ class upload_helper {
         // Trigger event.
         $context = \context_course::instance($job->courseid);
         $event = \block_opencast\event\upload_succeeded::create(
-                array(
-                    'context' => $context,
-                    'objectid' => $job->id,
-                    'courseid' => $job->courseid,
-                    'userid' => $job->userid,
-                    'other' => array('filename' => $filename)
-                )
+            array(
+                'context'  => $context,
+                'objectid' => $job->id,
+                'courseid' => $job->courseid,
+                'userid'   => $job->userid,
+                'other'    => array('filename' => $filename)
+            )
         );
 
         $event->trigger();
@@ -213,17 +219,17 @@ class upload_helper {
         // Trigger event.
         $context = \context_course::instance($job->courseid);
         $event = \block_opencast\event\upload_failed::create(
-                array(
-                    'context' => $context,
-                    'objectid' => $job->id,
-                    'courseid' => $job->courseid,
-                    'userid' => $job->userid,
-                    'other' => array(
-                        'filename' => $filename,
-                        'errormessage' => $errormessage,
-                        'countfailed' => $job->countfailed
-                    )
+            array(
+                'context'  => $context,
+                'objectid' => $job->id,
+                'courseid' => $job->courseid,
+                'userid'   => $job->userid,
+                'other'    => array(
+                    'filename'     => $filename,
+                    'errormessage' => $errormessage,
+                    'countfailed'  => $job->countfailed
                 )
+            )
         );
 
         $event->trigger();
@@ -231,11 +237,12 @@ class upload_helper {
 
     /**
      * Updates the status of a job and sets the time values accordingly.
-     * @param object $job job to be updated.
-     * @param int $status the new status of the job. See the predefined constants of the class for available choices.
-     * @param bool $setmodified if true, the value timemodified of the job is set to the current time.
-     * @param bool $setstarted if true, the value timestarted of the job is set to the current time.
-     * @param bool $setsucceeded if true, the value timesucceeded of the job is set to the current time.
+     *
+     * @param object $job          job to be updated.
+     * @param int    $status       the new status of the job. See the predefined constants of the class for available choices.
+     * @param bool   $setmodified  if true, the value timemodified of the job is set to the current time.
+     * @param bool   $setstarted   if true, the value timestarted of the job is set to the current time.
+     * @param bool   $setsucceeded if true, the value timesucceeded of the job is set to the current time.
      */
     protected function update_status(&$job, $status, $setmodified = true, $setstarted = false, $setsucceeded = false) {
         global $DB;
@@ -258,7 +265,9 @@ class upload_helper {
      * Processes the different work packages of the upload job. Since there are some tasks, which are processed by
      * opencast in an asynchronous fashion, this method can either return the created opencast event or false. In case
      * of false, the cronjob has to rerun this task later.
+     *
      * @param object $job represents the upload job.
+     *
      * @return false | object either false -> rerun later or object -> upload successful.
      * @throws \moodle_exception
      */
@@ -270,8 +279,8 @@ class upload_helper {
             case self::STATUS_READY_TO_UPLOAD:
                 $this->update_status($job, self::STATUS_CREATING_GROUP, true, true);
             case self::STATUS_CREATING_GROUP:
-                if(get_config('block_opencast', 'group_creation')) {
-                   try {
+                if (get_config('block_opencast', 'group_creation')) {
+                    try {
                         // Check if group exists.
                         $group = $this->apibridge->ensure_acl_group_exists($job->courseid);
                         if ($group) {
@@ -284,8 +293,7 @@ class upload_helper {
                         mtrace('... group creation still in progress');
                     }
                     break;
-                }
-                else {
+                } else {
                     // Move on to next status.
                     $this->update_status($job, self::STATUS_CREATING_SERIES);
                 }
@@ -340,7 +348,7 @@ class upload_helper {
                     $this->update_status($job, self::STATUS_UPLOADED);
                     $stepsuccessful = true;
 
-                    // Update eventid;
+                    // Update eventid.
                     $job->opencasteventid = $event->identifier;
                     $DB->update_record('block_opencast_uploadjob', $job);
                 }
@@ -369,8 +377,8 @@ class upload_helper {
                     return $event;
                 }
 
-                if(get_config('block_opencast', 'group_creation')) {
-                    // Ensure the assignment of a suitable role.                }
+                if (get_config('block_opencast', 'group_creation')) {
+                    // Ensure the assignment of a suitable role.
                     if (!$this->apibridge->ensure_acl_group_assigned($event->identifier, $job->courseid)) {
                         mtrace('... group not yet assigned.');
                         break;

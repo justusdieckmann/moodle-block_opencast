@@ -15,11 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Upload video form.
+ * Create series form.
  *
  * @package    block_opencast
- * @copyright  2017 Andreas Wagner, SYNERGY LEARNING
- * @author     Andreas Wagner
+ * @copyright  2018 Tamara Gunkel
+ * @author     Tamara Gunkel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -30,26 +30,22 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 
 require_once($CFG->dirroot . '/lib/formslib.php');
-require_once($CFG->dirroot . "/blocks/opencast/form/filemanager_opencast.php");
 
-class addvideo_form extends \moodleform {
+class createseries_form extends \moodleform {
 
     public function definition() {
-
         $mform = $this->_form;
+
+        $apibridge = \block_opencast\local\apibridge::get_instance();
 
         $mform->addElement('hidden', 'courseid', $this->_customdata['courseid']);
         $mform->setType('courseid', PARAM_INT);
 
-        $element = $mform->createElement('filemanager_opencast', 'videos_filemanager', get_string('videostoupload', 'block_opencast'), null, array('accepted_types' => array('video'),
-            'subdirs' => 0));
-
-        $element->setMaxBytes(get_config('block_opencast', 'uploadfilelimit'));
-
-        $mform->insertElementBefore($element, 'courseid');
+        $mform->addElement('text', 'seriestitle', get_string('form_seriestitle', 'block_opencast', array('size' => '40')));
+        $mform->setType('seriestitle', PARAM_TEXT);
+        $mform->addRule('seriestitle', get_string('required'), 'required', null, 'server');
+        $mform->setDefault('seriestitle', $apibridge->get_default_seriestitle($this->_customdata['courseid']));
 
         $this->add_action_buttons(true, get_string('savechanges'));
-        $this->set_data($this->_customdata['data']);
     }
-
 }

@@ -17,12 +17,10 @@
 /**
  *
  * * @package    block_opencast
- * @copyright  2017 Andreas Wagner, SYNERGY LEARNING
+ * @copyright  2018 Tamara Gunkel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 require_once('../../config.php');
-
-use block_opencast\local\upload_helper;
 
 global $PAGE, $OUTPUT, $CFG;
 
@@ -30,52 +28,46 @@ require_once($CFG->dirroot . '/repository/lib.php');
 
 $courseid = required_param('courseid', PARAM_INT);
 
-$baseurl = new moodle_url('/blocks/opencast/addvideo.php', array('courseid' => $courseid));
+$baseurl = new moodle_url('/blocks/opencast/createseries.php', array('courseid' => $courseid));
 $PAGE->set_url($baseurl);
 
 $redirecturl = new moodle_url('/blocks/opencast/index.php', array('courseid' => $courseid));
 
 require_login($courseid, false);
 
+$apibridge = \block_opencast\local\apibridge::get_instance();
+
+if ($apibridge->get_stored_seriesid($courseid)) {
+    throw new moodle_exception('series_already_exists', 'block_opencast');
+}
+
 $PAGE->set_pagelayout('incourse');
 $PAGE->set_title(get_string('pluginname', 'block_opencast'));
 $PAGE->set_heading(get_string('pluginname', 'block_opencast'));
 $PAGE->navbar->add(get_string('pluginname', 'block_opencast'), $redirecturl);
-$PAGE->navbar->add(get_string('edituploadjobs', 'block_opencast'), $baseurl);
+$PAGE->navbar->add(get_string('createseriesforcourse', 'block_opencast'), $baseurl);
 
 // Capability check.
 $coursecontext = context_course::instance($courseid);
-require_capability('block/opencast:addvideo', $coursecontext);
+require_capability('block/opencast:createseriesforcourse', $coursecontext);
 
-$block = $DB->get_record('block_instances', array('parentcontextid' => $coursecontext->id, 'blockname' => 'opencast'));
-$blockcontext = context_block::instance($block->id);
-$PAGE->set_context($blockcontext);
+$createseriesform = new \block_opencast\local\createseries_form(null, array('courseid' => $courseid));
 
-$data = new stdClass();
-$options = array('subdirs' => 0,
-                 'maxfiles' => -1,
-                 'accepted_types' => 'video',
-                 'return_types' => FILE_INTERNAL,
-                 'maxbytes' => get_config('block_opencast', 'uploadfilelimit') );
-file_prepare_standard_filemanager($data, 'videos', $options, $blockcontext, 'block_opencast', upload_helper::OC_FILEAREA, 0);
-
-$addvideoform = new \block_opencast\local\addvideo_form(null, array('data' => $data, 'courseid' => $courseid));
-
-if ($addvideoform->is_cancelled()) {
+if ($createseriesform->is_cancelled()) {
     redirect($redirecturl);
 }
 
-if ($data = $addvideoform->get_data()) {
-    file_save_draft_area_files($data->videos_filemanager,
-        $coursecontext->id, 'block_opencast', upload_helper::OC_FILEAREA, 0, $options);
-    // Update all upload jobs.
-    \block_opencast\local\upload_helper::save_upload_jobs($courseid, $coursecontext);
-    redirect($redirecturl, get_string('uploadjobssaved', 'block_opencast'));
+if ($data = $createseriesform->get_data()) {
+    // Create new series.
+    if ($apibridge->create_course_series($courseid, $data->seriestitle)) {
+        redirect($redirecturl, get_string('seriescreated', 'block_opencast'), null, \core\output\notification::NOTIFY_SUCCESS);
+    }
+    redirect($redirecturl, get_string('seriesnotcreated', 'block_opencast'), null, \core\output\notification::NOTIFY_ERROR);
 }
 
 $renderer = $PAGE->get_renderer('block_opencast');
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('edituploadjobs', 'block_opencast'));
-$addvideoform->display();
+echo $OUTPUT->heading(get_string('createseriesforcourse', 'block_opencast'));
+$createseriesform->display();
 echo $OUTPUT->footer();
