@@ -23,16 +23,17 @@ Feature: Add Opencast block as Teacher
     When I click on "Go to overview..." "link"
     Then I should see "Videos currently being uploaded to the streaming server"
 
-  Scenario: Opencast Add video / Eiit upload tasks page implemented
+  Scenario: Opencast Add video / Edit upload tasks page implemented
     Given I click on "Go to overview..." "link"
     When I click on "Add video / Edit upload tasks" "button"
     Then I should see "You can drag and drop files here to add them."
 
   @_file_upload
-  Scenario: Opencast äöü
+  Scenario: Opencast
     Given I click on "Go to overview..." "link"
     And I click on "Add video / Edit upload tasks" "button"
     And I upload "blocks/opencast/tests/file/test.mp4" file to "Videos to upload to opencast" filemanager
+
 
 
 
