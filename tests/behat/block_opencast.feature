@@ -45,13 +45,16 @@ Feature: Add Opencast block as Teacher
     And I click on "Save changes" "button"
     Then I should see "test.mp4"
     And I should see "Ready to upload"
-    When I run the scheduled task "\block_opencast\task\process_upload_cron"
+
+  @_file_upload @javascript
+  Scenario: Opencast run cronjob
+    Given I click on "Go to overview..." "link"
+    And I click on "Add video / Edit upload tasks" "button"
+    And I upload "blocks/opencast/tests/file/test.mp4" file to "Videos to upload to opencast" filemanager
+    And I click on "Save changes" "button"
+    And I run the scheduled task "\block_opencast\task\process_upload_cron"
     And I wait "2" seconds
     And I reload the page
     Then I should not see "Ready to upload"
     And I should see "test.mp4"
-
-
-
-
 
