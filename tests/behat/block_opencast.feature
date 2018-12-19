@@ -12,7 +12,16 @@ Feature: Add Opencast block as Teacher
     And the following "course enrolments" exist:
       | user     | course | role           |
       | teacher1 | C1     | editingteacher |
-    And I log in as "teacher1"
+    And the following config values are set as admin:
+      | config          | value                    | plugin         |
+      | apiurl          | 172.17.0.1:8080          | tool_opencast  |
+      | apipassword     | opencast                 | tool_opencast  |
+      | apiusername     | admin                    | tool_opencast  |
+      | limituploadjobs | 0                        | block_opencast |
+      | group_creation  | 0                        | block_opencast |
+      | group_name      | Moodle_course_[COURSEID] | block_opencast |
+      | series_name     | Course_Series_[COURSEID] | block_opencast |
+    And I log in as "admin"
     And I am on "Course 1" course homepage with editing mode on
     And I add the "Opencast Videos" block
 
@@ -28,11 +37,19 @@ Feature: Add Opencast block as Teacher
     When I click on "Add video / Edit upload tasks" "button"
     Then I should see "You can drag and drop files here to add them."
 
-  @_file_upload
-  Scenario: Opencast
+  @_file_upload @javascript @mytag
+  Scenario: Opencast Upload Video
     Given I click on "Go to overview..." "link"
     And I click on "Add video / Edit upload tasks" "button"
     And I upload "blocks/opencast/tests/file/test.mp4" file to "Videos to upload to opencast" filemanager
+    And I click on "Save changes" "button"
+    Then I should see "test.mp4"
+    And I should see "Ready to upload"
+    When I run the scheduled task "\block_opencast\task\process_upload_cron"
+    And I wait "2" seconds
+    And I reload the page
+    Then I should not see "Ready to upload"
+    And I should see "test.mp4"
 
 
 

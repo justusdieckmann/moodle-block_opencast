@@ -25,7 +25,6 @@ Feature: Add Opencast block as Teacher
 #    And the following "videos" exist on opencast:
 #      | title        | series |
 #      | video1_1.mp4 | S1     |
-#      | video1_2.mp4 | S1     |
     And I log in as "admin"
     And I am on "Course 1" course homepage with editing mode on
     And I add the "Opencast Videos" block
@@ -36,6 +35,5 @@ Feature: Add Opencast block as Teacher
     And I set the field "seriesid" to "f372754a-9a8b-4dea-b717-e08880a2e3cb"
     And I click on "Save changes" "button"
     Then I should see "video1_1.mp4"
-    And I should see "video1_2.mp4"
 
     
