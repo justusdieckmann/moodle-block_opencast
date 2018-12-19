@@ -37,7 +37,7 @@ Feature: Add Opencast block as Teacher
     When I click on "Add video / Edit upload tasks" "button"
     Then I should see "You can drag and drop files here to add them."
 
-  @_file_upload @javascript @mytag
+  @_file_upload @javascript
   Scenario: Opencast Upload Video
     Given I click on "Go to overview..." "link"
     And I click on "Add video / Edit upload tasks" "button"
