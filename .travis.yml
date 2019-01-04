@@ -92,7 +92,7 @@ jobs:
       - moodle-plugin-ci install
       script:
       - moodle-plugin-ci phpunit --coverage-clover
-      - moodle-plugin-ci behat
+      - moodle-plugin-ci behat --dump --auto-rerun 0
 
 # Unit tests and behat tests against full matrix.
 install:
