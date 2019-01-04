@@ -76,4 +76,6 @@ Feature: Add Opencast block as Teacher
     Then I should see "The series ID was removed."
     And I should see "Create new series"
     And I should see "No videos available"
+    When I wait "10" seconds
+    And I reload the page
     And I should not see "test.mp4"
