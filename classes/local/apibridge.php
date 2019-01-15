@@ -719,7 +719,6 @@ class apibridge {
             throw new \moodle_exception('invalidfiletoupload', 'tool_opencast');
         }
 
-        $event->add_meta_data('publisher', 'test');
         $event->add_meta_data('title', $storedfile->get_filename());
         $event->add_meta_data('isPartOf', $seriesidentifier);
         $params = $event->get_form_params();
